@@ -13,7 +13,9 @@ export default function TextEditor() {
     setShowMenu(false);
   };
 
-  const genAI = new GoogleGenerativeAI("AIzaSyDLs8v5AYfRHh5XdtOY7JgRDUzm1yoE818");
+  const apiKey=process.env.REACT_APP_APIKEY;
+  const genAI = new GoogleGenerativeAI(apiKey);
+
   const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
   const handleContinue = async (e) => {
