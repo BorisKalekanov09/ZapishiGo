@@ -17,7 +17,7 @@ export default function Sidebar() {
         <svg className="bi me-2" width="40" height="32">
           <use xlinkHref="#bootstrap"></use>
         </svg>
-        <span className="fs-4">NapishiGo</span>
+        <span className="fs-4">ZapishiGo</span>
       </a>
       <hr />
       <ul className="nav nav-pills flex-column mb-auto">
