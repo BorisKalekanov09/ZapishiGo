@@ -1,9 +1,15 @@
 // src/components/Sidebar.jsx
-import React, { useState } from "react";
+import React from "react";
 import "./sidebar.css";
 
-export default function Sidebar() {
-  const [active, setActive] = useState("home");
+export default function Sidebar({
+  title,
+  text,
+  active,
+  setActive,
+  onShowPlans,
+}) {
+  const isDisabled = !title || !text;
 
   return (
     <div
@@ -47,8 +53,11 @@ export default function Sidebar() {
               border: "none",
               textAlign: "left",
               color: "inherit",
+              opacity: isDisabled ? 0.5 : 1,
+              pointerEvents: isDisabled ? "none" : "auto",
             }}
             onClick={() => setActive("mindmaps")}
+            disabled={isDisabled}
           >
             <svg className="bi me-2" width="16" height="16">
               <use xlinkHref="#speedometer2"></use>
@@ -64,8 +73,11 @@ export default function Sidebar() {
               border: "none",
               textAlign: "left",
               color: "inherit",
+              opacity: isDisabled ? 0.5 : 1,
+              pointerEvents: isDisabled ? "none" : "auto",
             }}
             onClick={() => setActive("quiz")}
+            disabled={isDisabled}
           >
             <svg className="bi me-2" width="16" height="16">
               <use xlinkHref="#table"></use>
@@ -118,6 +130,15 @@ export default function Sidebar() {
             <a className="dropdown-item" href="#">
               Sign out
             </a>
+          </li>
+          <li>
+            <button
+              className="dropdown-item"
+              type="button"
+              onClick={onShowPlans}
+            >
+              Show plans
+            </button>
           </li>
         </ul>
       </div>
