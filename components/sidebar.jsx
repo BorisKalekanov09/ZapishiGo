@@ -8,6 +8,9 @@ export default function Sidebar({
   active,
   setActive,
   onShowPlans,
+    userName,
+      onSignOut,
+       onNewProject, 
 }) {
   const isDisabled = !title || !text;
 
@@ -95,29 +98,29 @@ export default function Sidebar({
           data-bs-toggle="dropdown"
           aria-expanded="false"
         >
-          <img
+          {/* <img
             src="https://github.com/mdo.png"
             alt=""
             width="32"
             height="32"
             className="rounded-circle me-2"
-          />
-          <strong>mdo</strong>
+          /> */}
+          <strong>{userName || "User"}</strong>
         </a>
         <ul
           className="dropdown-menu dropdown-menu-dark text-small shadow"
           aria-labelledby="dropdownUser1"
         >
           <li>
-            <a className="dropdown-item" href="#">
+            <a className="dropdown-item" href="#"   onClick={() => {
+      setActive("home");
+      onNewProject();  // New function
+    }}
+  >
               New project...
             </a>
           </li>
-          <li>
-            <a className="dropdown-item" href="#">
-              Settings
-            </a>
-          </li>
+        
           <li>
             <a className="dropdown-item" href="#">
               Profile
@@ -127,7 +130,8 @@ export default function Sidebar({
             <hr className="dropdown-divider" />
           </li>
           <li>
-            <a className="dropdown-item" href="#">
+            <a className="dropdown-item" href="#" onClick={onSignOut}>
+              
               Sign out
             </a>
           </li>

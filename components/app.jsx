@@ -5,67 +5,102 @@ import TextEditor from "./TextEditor";
 import ThemeSwitcher from "./ThemeSwitcher";
 import QuizSettings from "./QuizSettings";
 import Quiz from "./Quiz";
-// import PlansModal from "./PlansModal"; // Uncomment when implemented
+import Modal from "react-bootstrap/Modal";
+import Button from "react-bootstrap/Button";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userName, setUserName] = useState("");
+  const [userEmail, setUserEmail] = useState("");
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
   const [activePage, setActivePage] = useState("home");
-  const [quizConfig, setQuizConfig] = useState(null);
   const [quizQuestions, setQuizQuestions] = useState(null);
   const [plansModal, setPlansModal] = useState(false);
   const [plans, setPlans] = useState([]);
 
-  // Reset quiz state when leaving the quiz page
-  useEffect(() => {
-    if (activePage !== "quiz") {
-      setQuizConfig(null);
-      setQuizQuestions(null);
-    }
-  }, [activePage]);
 
-  // Load plans from localStorage on mount
-  useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem("plans") || "[]");
-    setPlans(saved);
-  }, []);
-
-  // Save plan (call this when user wants to save current plan)
-  const saveCurrentPlan = () => {
-    const exists = plans.some(
-      (plan) => plan.title === title && plan.text === text
-    );
-    if (exists) {
-      return false; // Not saved, duplicate
-    }
-    const newPlans = [...plans, { title, text }];
-    setPlans(newPlans);
-    localStorage.setItem("plans", JSON.stringify(newPlans));
-    return true; // Saved
+    const handleNewProject = () => {
+    setTitle("");
+    setText("");
   };
 
-  // Load plan (set title and text)
-  const handleLoadPlan = (plan) => {
+  useEffect(() => {
+    const savedUserString = localStorage.getItem("user");
+    if (savedUserString) {
+      try {
+        const savedUser = JSON.parse(savedUserString);
+        if (savedUser && savedUser.name && savedUser.email) {
+          setUserName(savedUser.name);
+          setUserEmail(savedUser.email);
+          setIsAuthenticated(true);
+        }
+      } catch {
+        setIsAuthenticated(false);
+        setUserName("");
+        setUserEmail("");
+      }
+    }
+  }, []);
+
+  const handleLogin = () => {
+    const savedUserString = localStorage.getItem("user");
+    if (savedUserString) {
+      try {
+        const savedUser = JSON.parse(savedUserString);
+        if (savedUser && savedUser.name && savedUser.email) {
+          setUserName(savedUser.name);
+          setUserEmail(savedUser.email);
+          setIsAuthenticated(true);
+        }
+      } catch {
+        setIsAuthenticated(false);
+        setUserName("");
+        setUserEmail("");
+      }
+    }
+  };
+
+  const handleSignOut = () => {
+    localStorage.removeItem("user");
+    setIsAuthenticated(false);
+    setUserName("");
+    setUserEmail("");
+  };
+
+  const handleShowPlans = async () => {
+    try {
+      const response = await fetch("http://localhost:8080/api/getplans", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: userEmail }),
+      });
+
+      if (!response.ok) {
+        alert("Failed to fetch plans");
+        return;
+      }
+
+      const data = await response.json();
+      setPlans(data.plans || []);
+      setPlansModal(true);
+    } catch (err) {
+      console.error(err);
+      alert("Error fetching plans");
+    }
+  };
+
+  const handleSelectPlan = (plan) => {
     setTitle(plan.title);
     setText(plan.text);
     setPlansModal(false);
-    setActivePage("home");
   };
-
-  const handleDeletePlan = (idx) => {
-    const newPlans = plans.filter((_, i) => i !== idx);
-    setPlans(newPlans);
-    localStorage.setItem("plans", JSON.stringify(newPlans));
-  };
-
-  const handleShowPlans = () => setPlansModal(true);
 
   return (
     <div>
       {!isAuthenticated ? (
-        <LoginSignup onLogin={() => setIsAuthenticated(true)} />
+        <LoginSignup onLogin={handleLogin} />
       ) : (
         <div className="d-flex">
           <Sidebar
@@ -74,6 +109,9 @@ export default function App() {
             active={activePage}
             setActive={setActivePage}
             onShowPlans={handleShowPlans}
+            userName={userName}
+            onSignOut={handleSignOut}
+             onNewProject={handleNewProject}
           />
           <div className="container-fluid">
             <div className="d-flex justify-content-end p-3">
@@ -85,7 +123,7 @@ export default function App() {
                 setTitle={setTitle}
                 text={text}
                 setText={setText}
-                saveCurrentPlan={saveCurrentPlan}
+                userEmail={userEmail}
               />
             )}
             {activePage === "quiz" && !quizQuestions && (
@@ -101,19 +139,39 @@ export default function App() {
                 text={text}
                 onFinish={() => {
                   setQuizQuestions(null);
-                  setQuizConfig(null);
                 }}
               />
             )}
-            {/* Uncomment and implement PlansModal when ready
-            <PlansModal
-              show={plansModal}
-              onHide={() => setPlansModal(false)}
-              plans={plans}
-              onLoad={handleLoadPlan}
-              onDelete={handleDeletePlan}
-            />
-            */}
+
+            {/* Plans Modal */}
+            <Modal show={plansModal} onHide={() => setPlansModal(false)}>
+              <Modal.Header closeButton>
+                <Modal.Title>Select a Plan</Modal.Title>
+              </Modal.Header>
+              <Modal.Body>
+                {plans.length === 0 ? (
+                  <p>No plans found.</p>
+                ) : (
+                  <ul className="list-group">
+                    {plans.map((plan, index) => (
+                      <li
+                        key={index}
+                        className="list-group-item list-group-item-action"
+                        style={{ cursor: "pointer" }}
+                        onClick={() => handleSelectPlan(plan)}
+                      >
+                        {plan.title}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </Modal.Body>
+              <Modal.Footer>
+                <Button variant="secondary" onClick={() => setPlansModal(false)}>
+                  Close
+                </Button>
+              </Modal.Footer>
+            </Modal>
           </div>
         </div>
       )}

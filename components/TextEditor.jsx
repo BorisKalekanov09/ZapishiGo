@@ -6,15 +6,14 @@ export default function TextEditor({
   setTitle,
   text,
   setText,
-  // saveCurrentPlan,
-  //remove if you dont need saveCurrentPlan
+  userEmail,
 }) {
   const [selectedOption, setSelectedOption] = useState("");
   const [showMenu, setShowMenu] = useState(false);
   const [pendingOutput, setPendingOutput] = useState("");
   const [showSaved, setShowSaved] = useState(false);
   const [showDuplicate, setShowDuplicate] = useState(false);
-
+const [error, setError] = useState("");
   const handleMenuClick = (option) => {
     setSelectedOption(option);
     setShowMenu(false);
@@ -49,17 +48,48 @@ export default function TextEditor({
       setPendingOutput("");
     }
   };
-  const handleSavePlan = () => {
-    if (!title || !text) {
-      alert("Please enter a title and some text before saving.");
-      return; // I added this check to prevent saving empty plans
-      // add here your code for the database
+
+
+const savePlan = async (title, text) => {
+  try {
+    const res = await fetch("http://localhost:8080/api/saveplan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, text, email: userEmail }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      setError(data.message || "Failed to save plan");
+      return false;
     }
-  };
+
+    return true;
+  } catch (error) {
+    setError("Network error while saving plan");
+    return false;
+  }
+};
+
+const handleSavePlan = async () => {
+  setError("");
+
+  if (!title || !text || !userEmail) {
+    setError("Please enter a title, some text and be logged in before saving.");
+    return;
+  }
+
+  const success = await savePlan(title, text);
+
+  if (success) {
+    setShowSaved(true);
+    setTimeout(() => setShowSaved(false), 3000);
+  }
+};
 
   return (
     <div className="card mt-4 position-relative">
-      {}
       <div
         className={`position-absolute start-50 translate-middle-x px-4 py-2 rounded bg-success text-white shadow
           ${showSaved ? "fade-in" : "fade-out"}`}
