@@ -135,7 +135,7 @@ export default function Sidebar({
             <button
               className="dropdown-item"
               type="button"
-              onClick={onShowPlans}
+              onClick={onShowPlans} //I think you should display the plans from database from here.
             >
               Show plans
             </button>

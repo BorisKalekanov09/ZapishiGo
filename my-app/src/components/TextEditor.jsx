@@ -6,7 +6,8 @@ export default function TextEditor({
   setTitle,
   text,
   setText,
-  saveCurrentPlan,
+  // saveCurrentPlan,
+  //remove if you dont need saveCurrentPlan
 }) {
   const [selectedOption, setSelectedOption] = useState("");
   const [showMenu, setShowMenu] = useState(false);
@@ -26,7 +27,7 @@ export default function TextEditor({
   const handleContinue = async (e) => {
     e.preventDefault();
     try {
-      const prompt = `Continue the following text appropriately. Use this guidance (do not say it in the fial answer): "${selectedOption}". Do not mention the instruction or that you're an AI — just continue the writing:\n\n${text}\n\n`;
+      const prompt = `Continue the following text appropriately. Use this guidance (do not say it in the fial answer): "${selectedOption}". Do not mention the instruction or that you're an AI — just continue the writing:\n\n${text}\n\n let the answer be only the new part that you add dont put ... to show that there is tex before ,and also prease dont say the guidance thanks`;
 
       const result = await model.generateContent(prompt);
 
@@ -48,26 +49,22 @@ export default function TextEditor({
       setPendingOutput("");
     }
   };
-
   const handleSavePlan = () => {
-    const saved = saveCurrentPlan();
-    if (saved) {
-      setShowSaved(true);
-      setTimeout(() => setShowSaved(false), 2500);
-    } else {
-      setShowDuplicate(true);
-      setTimeout(() => setShowDuplicate(false), 2500);
+    if (!title || !text) {
+      alert("Please enter a title and some text before saving.");
+      return; // I added this check to prevent saving empty plans
+      // add here your code for the database
     }
   };
 
   return (
     <div className="card mt-4 position-relative">
-      {/* Pop-up alerts */}
+      {}
       <div
         className={`position-absolute start-50 translate-middle-x px-4 py-2 rounded bg-success text-white shadow
           ${showSaved ? "fade-in" : "fade-out"}`}
         style={{
-          top: "-50px", // Move the message higher above the card
+          top: "-50px",
           left: "50%",
           zIndex: 10,
           opacity: showSaved ? 1 : 0,
@@ -81,7 +78,7 @@ export default function TextEditor({
         className={`position-absolute start-50 translate-middle-x px-4 py-2 rounded bg-danger text-white shadow
           ${showDuplicate ? "fade-in" : "fade-out"}`}
         style={{
-          top: "-50px", // Move the message higher above the card
+          top: "-50px",
           left: "50%",
           zIndex: 10,
           opacity: showDuplicate ? 1 : 0,
