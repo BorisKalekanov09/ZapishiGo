@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import CircularProgress from "@mui/material/CircularProgress";
 
 async function generateQuizQuestions({ numQuestions, types, title, text }) {
   const { GoogleGenerativeAI } = await import("@google/generative-ai");
@@ -54,6 +55,7 @@ export default function QuizSettings({ onQuizGenerated, title, text }) {
     open: false,
     multiple: false,
   });
+  const [showHomeLoading, setShowHomeLoading] = useState(false);
 
   const handleTypeChange = (e) => {
     setTypes({ ...types, [e.target.value]: e.target.checked });
@@ -63,15 +65,38 @@ export default function QuizSettings({ onQuizGenerated, title, text }) {
   const atLeastOneType = types.open || types.multiple;
 
   const handleStart = async () => {
-    const selectedTypes = Object.keys(types).filter((t) => types[t]);
-    const questions = await generateQuizQuestions({
-      numQuestions,
-      types: selectedTypes, // always an array
-      title,
-      text,
-    });
-    onQuizGenerated(questions);
+    setShowHomeLoading(true);
+    try {
+      const selectedTypes = Object.keys(types).filter((t) => types[t]);
+      const questions = await generateQuizQuestions({
+        numQuestions,
+        types: selectedTypes, // always an array
+        title,
+        text,
+      });
+      onQuizGenerated(questions);
+    } finally {
+      setShowHomeLoading(false);
+    }
   };
+
+  if (showHomeLoading) {
+    return (
+      <div
+        style={{
+          height: "300px",
+          width: "100%",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <CircularProgress />
+        <span style={{ marginTop: 16, fontSize: 18 }}>Loading...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="card mx-auto" style={{ maxWidth: 400, marginTop: 80 }}>
