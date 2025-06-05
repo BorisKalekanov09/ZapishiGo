@@ -1,19 +1,45 @@
 import React, { useState } from "react";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
+const DownloadButton = ({ title, text, onError }) => {
+  const handleDownload = () => {
+    if (!title || !text) {
+      onError("Please enter a title and some text before downloading.");
+      return;
+    }
+
+    const content = `Title: ${title}\n\n${text}`;
+    const blob = new Blob([content], { type: "text/plain" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${title.replace(/[^a-z0-9]/gi, "_").toLowerCase()}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  };
+
+  return (
+    <button className="btn btn-primary" type="button" onClick={handleDownload}>
+      Download Plan
+    </button>
+  );
+};
+
 export default function TextEditor({
   title,
   setTitle,
   text,
   setText,
-  // saveCurrentPlan,
-  //remove if you dont need saveCurrentPlan
+  userEmail,
 }) {
   const [selectedOption, setSelectedOption] = useState("");
   const [showMenu, setShowMenu] = useState(false);
   const [pendingOutput, setPendingOutput] = useState("");
   const [showSaved, setShowSaved] = useState(false);
   const [showDuplicate, setShowDuplicate] = useState(false);
+  const [error, setError] = useState("");
 
   const handleMenuClick = (option) => {
     setSelectedOption(option);
@@ -59,35 +85,6 @@ export default function TextEditor({
 
   return (
     <div className="card mt-4 position-relative">
-      {}
-      <div
-        className={`position-absolute start-50 translate-middle-x px-4 py-2 rounded bg-success text-white shadow
-          ${showSaved ? "fade-in" : "fade-out"}`}
-        style={{
-          top: "-50px",
-          left: "50%",
-          zIndex: 10,
-          opacity: showSaved ? 1 : 0,
-          pointerEvents: "none",
-          transition: "opacity 1s",
-        }}
-      >
-        Plan was saved!
-      </div>
-      <div
-        className={`position-absolute start-50 translate-middle-x px-4 py-2 rounded bg-danger text-white shadow
-          ${showDuplicate ? "fade-in" : "fade-out"}`}
-        style={{
-          top: "-50px",
-          left: "50%",
-          zIndex: 10,
-          opacity: showDuplicate ? 1 : 0,
-          pointerEvents: "none",
-          transition: "opacity 1s",
-        }}
-      >
-        Plan already exists!
-      </div>
       <div className="card-header">Text Editor</div>
       <div className="card-body">
         <form onSubmit={handleContinue}>
@@ -170,7 +167,13 @@ export default function TextEditor({
             >
               Save Plan
             </button>
+            <DownloadButton title={title} text={text} onError={setError} />
           </div>
+          {error && (
+            <div className="alert alert-danger mt-3" role="alert">
+              {error}
+            </div>
+          )}
         </form>
       </div>
     </div>

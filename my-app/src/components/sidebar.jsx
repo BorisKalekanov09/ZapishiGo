@@ -1,13 +1,16 @@
 // src/components/Sidebar.jsx
 import React from "react";
 import "./sidebar.css";
-
+import { FaUser } from "react-icons/fa";
 export default function Sidebar({
   title,
   text,
   active,
   setActive,
   onShowPlans,
+  userName,
+  onSignOut,
+  onNewProject,
 }) {
   const isDisabled = !title || !text;
 
@@ -95,50 +98,48 @@ export default function Sidebar({
           data-bs-toggle="dropdown"
           aria-expanded="false"
         >
-          <img
-            src="https://github.com/mdo.png"
-            alt=""
-            width="32"
-            height="32"
-            className="rounded-circle me-2"
-          />
-          <strong>mdo</strong>
+          {<FaUser className="icon" />}
+          <strong className="username">{userName || "User"}</strong>
         </a>
         <ul
           className="dropdown-menu dropdown-menu-dark text-small shadow"
           aria-labelledby="dropdownUser1"
         >
           <li>
-            <a className="dropdown-item" href="#">
+            <a
+              className="dropdown-item"
+              href="#"
+              onClick={() => {
+                setActive("home");
+                onNewProject();
+              }}
+            >
               New project...
             </a>
           </li>
-          <li>
-            <a className="dropdown-item" href="#">
-              Settings
-            </a>
-          </li>
-          <li>
+
+          {/*<li>
             <a className="dropdown-item" href="#">
               Profile
             </a>
-          </li>
+          </li>*/}
           <li>
             <hr className="dropdown-divider" />
           </li>
-          <li>
-            <a className="dropdown-item" href="#">
-              Sign out
-            </a>
-          </li>
+
           <li>
             <button
               className="dropdown-item"
               type="button"
-              onClick={onShowPlans} //I think you should display the plans from database from here.
+              onClick={onShowPlans}
             >
               Show plans
             </button>
+          </li>
+          <li>
+            <a className="dropdown-item" href="#" onClick={onSignOut}>
+              Sign out
+            </a>
           </li>
         </ul>
       </div>
