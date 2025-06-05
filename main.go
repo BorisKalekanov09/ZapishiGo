@@ -56,7 +56,6 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Fetch user from DB by email
 	var storedName string
 	var storedHash string
 	var storedEmail string
@@ -66,14 +65,12 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Compare hashed password
 	err = bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(u.Password))
 	if err != nil {
 		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
 		return
 	}
 
-	// Login success - return name + email
 	resp := User{
 		Name:  storedName,
 		Email: storedEmail,
@@ -102,20 +99,17 @@ func signupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Basic validation
 	if u.Name == "" || u.Email == "" || u.Password == "" {
 		http.Error(w, "Name, email and password are required", http.StatusBadRequest)
 		return
 	}
 
-	// Hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
 	if err != nil {
 		http.Error(w, "Failed to hash password", http.StatusInternalServerError)
 		return
 	}
 
-	// Insert user
 	tsql := `INSERT INTO Users (Username, Email, PasswordHash) VALUES (@p1, @p2, @p3)`
 	_, err = db.Exec(tsql, u.Name, u.Email, string(hashedPassword))
 	if err != nil {
@@ -127,7 +121,6 @@ func signupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Return the user info immediately after signup for frontend login
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	resp := User{
@@ -214,7 +207,6 @@ func savePlanHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Find userId by email
 	var userId int
 	err = db.QueryRow("SELECT UserId FROM Users WHERE Email = @p1", req.Email).Scan(&userId)
 	if err != nil {
@@ -222,11 +214,9 @@ func savePlanHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check if a plan with the same title exists for this user
 	var existingChatId int
 	err = db.QueryRow("SELECT ChatId FROM Chats WHERE UserId = @p1 AND Title = @p2", userId, req.Title).Scan(&existingChatId)
 	if err == sql.ErrNoRows {
-		// No existing plan, insert new one
 		insertChatSQL := `INSERT INTO Chats (UserId, Title) OUTPUT INSERTED.ChatId VALUES (@p1, @p2)`
 		var newChatId int
 		err = db.QueryRow(insertChatSQL, userId, req.Title).Scan(&newChatId)
@@ -243,7 +233,6 @@ func savePlanHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 	} else if err == nil {
-		// Plan exists, update the existing text
 		updateEntrySQL := `
 			UPDATE ChatEntries 
 			SET TextContent = @p1
@@ -256,7 +245,6 @@ func savePlanHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 	} else {
-		// Some other error
 		http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}

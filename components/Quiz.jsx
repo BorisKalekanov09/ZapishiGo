@@ -4,7 +4,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 export default function Quiz({ questions, text, onFinish }) {
   const [current, setCurrent] = useState(0);
   const [userAnswer, setUserAnswer] = useState("");
-  const [result, setResult] = useState(null); // "correct" | "wrong" | null
+  const [result, setResult] = useState(null);
   const [checking, setChecking] = useState(false);
   const [score, setScore] = useState(0);
   const [finished, setFinished] = useState(false);
@@ -19,7 +19,7 @@ export default function Quiz({ questions, text, onFinish }) {
   const question = questions[current];
 
   const handleCheck = async () => {
-    if (showedAnswer) return; // No scoring if answer is shown
+    if (showedAnswer) return; 
 
     if (question.type === "open") {
       setChecking(true);
@@ -70,8 +70,8 @@ export default function Quiz({ questions, text, onFinish }) {
 
   const handleShowAnswer = async () => {
     setShowedAnswer(true);
-    setResult(null); // Remove any previous result
-    setQuestionScore(0); // No more points for this question
+    setResult(null); 
+    setQuestionScore(0); 
     if (question.type === "open") {
       const apiKey = process.env.REACT_APP_APIKEY;
       const genAI = new GoogleGenerativeAI(apiKey);

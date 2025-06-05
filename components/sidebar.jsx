@@ -114,7 +114,7 @@ export default function Sidebar({
           <li>
             <a className="dropdown-item" href="#"   onClick={() => {
       setActive("home");
-      onNewProject();  // New function
+      onNewProject();  
     }}
   >
               New project...
@@ -139,7 +139,7 @@ export default function Sidebar({
             <button
               className="dropdown-item"
               type="button"
-              onClick={onShowPlans} //I think you should display the plans from database from here.
+              onClick={onShowPlans} 
             >
               Show plans
             </button>

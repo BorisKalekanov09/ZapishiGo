@@ -37,7 +37,6 @@ const handleSubmit = async () => {
       return;
     }
 
-    // Save user info in localStorage and trigger login
     localStorage.setItem(
       "user",
       JSON.stringify({

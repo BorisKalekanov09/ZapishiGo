@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import CircularProgress from "@mui/material/CircularProgress";
 
 async function generateQuizQuestions({ numQuestions, types, title, text }) {
   const { GoogleGenerativeAI } = await import("@google/generative-ai");
@@ -6,7 +7,6 @@ async function generateQuizQuestions({ numQuestions, types, title, text }) {
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-  // Calculate how many open/multiple questions
   let numOpen = 0,
     numMultiple = 0;
   if (types.length === 2) {
@@ -18,7 +18,6 @@ async function generateQuizQuestions({ numQuestions, types, title, text }) {
     numMultiple = numQuestions;
   }
 
-  // Build prompt for AI
   let prompt = `Based on the following title and text, generate ${numQuestions} quiz questions.`;
   if (numOpen && numMultiple) {
     prompt += ` 30% should be open questions and 70% should be multiple choice (A, B, C, D).`;
@@ -36,7 +35,6 @@ async function generateQuizQuestions({ numQuestions, types, title, text }) {
   const output =
     typeof response.text === "function" ? await response.text() : response.text;
 
-  // Try to parse JSON from AI output
   try {
     const jsonStart = output.indexOf("[");
     const jsonEnd = output.lastIndexOf("]");
@@ -54,6 +52,7 @@ export default function QuizSettings({ onQuizGenerated, title, text }) {
     open: false,
     multiple: false,
   });
+  const [showHomeLoading, setShowHomeLoading] = useState(false);
 
   const handleTypeChange = (e) => {
     setTypes({ ...types, [e.target.value]: e.target.checked });
@@ -63,15 +62,38 @@ export default function QuizSettings({ onQuizGenerated, title, text }) {
   const atLeastOneType = types.open || types.multiple;
 
   const handleStart = async () => {
-    const selectedTypes = Object.keys(types).filter((t) => types[t]);
-    const questions = await generateQuizQuestions({
-      numQuestions,
-      types: selectedTypes, // always an array
-      title,
-      text,
-    });
-    onQuizGenerated(questions);
+    setShowHomeLoading(true);
+    try {
+      const selectedTypes = Object.keys(types).filter((t) => types[t]);
+      const questions = await generateQuizQuestions({
+        numQuestions,
+        types: selectedTypes, 
+        title,
+        text,
+      });
+      onQuizGenerated(questions);
+    } finally {
+      setShowHomeLoading(false);
+    }
   };
+
+  if (showHomeLoading) {
+    return (
+      <div
+        style={{
+          height: "300px",
+          width: "100%",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <CircularProgress />
+        <span style={{ marginTop: 16, fontSize: 18 }}>Loading...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="card mx-auto" style={{ maxWidth: 400, marginTop: 80 }}>
