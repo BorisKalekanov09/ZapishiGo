@@ -1,11 +1,15 @@
 package main
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/json"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
+	"regexp"
 	"strings"
 
 	_ "github.com/denisenkom/go-mssqldb"
@@ -252,6 +256,91 @@ func savePlanHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte(`{"message":"Plan saved successfully"}`))
 }
+func generateMindMap(w http.ResponseWriter, r *http.Request) {
+	enableCORS(w)
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	if r.Method != http.MethodPost {
+		http.Error(w, "Only POST allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Cannot read body", http.StatusBadRequest)
+		return
+	}
+	text := string(body)
+
+	lines := strings.Split(text, "\n")
+	topic := strings.TrimSpace(lines[0])
+	planLines := lines[1:]
+
+	re := regexp.MustCompile(`^(\\d+(?:\\.\\d+)*)\\.\\s*(.*)$`)
+
+	var nodes []string
+	var edges []string
+	parentStack := []string{topic}
+	lastLevel := 0
+
+	for _, line := range planLines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		m := re.FindStringSubmatch(line)
+		if m != nil {
+			numbering := m[1]
+			content := m[2]
+			level := strings.Count(numbering, ".") + 1
+			key := numbering + ". " + content
+
+			if level > lastLevel {
+				parentStack = append(parentStack, parentStack[len(parentStack)-1])
+			} else if level < lastLevel {
+				parentStack = parentStack[:level]
+			}
+			parentStack[len(parentStack)-1] = key
+			parent := parentStack[level-1]
+			edges = append(edges, parent+" -> "+key)
+			nodes = append(nodes, key)
+			lastLevel = level
+		} else {
+			// Ако няма номерация – ново ниво 1
+			key := line
+			edges = append(edges, topic+" -> "+key)
+			nodes = append(nodes, key)
+			parentStack = []string{topic, key}
+			lastLevel = 1
+		}
+	}
+
+	var dot bytes.Buffer
+	dot.WriteString("graph MindMap {\n")
+	dot.WriteString("  labelloc=\"t\";\n")
+	dot.WriteString("  label=\"" + topic + "\";\n")
+	dot.WriteString("  layout=twopi;\n")
+	dot.WriteString("  node [shape=box, style=filled, fillcolor=lightyellow, fontname=Arial];\n")
+	dot.WriteString("  \"" + topic + "\";\n")
+	for _, n := range nodes {
+		dot.WriteString("  \"" + n + "\";\n")
+	}
+	for _, e := range edges {
+		parts := strings.SplitN(e, " -> ", 2)
+		if len(parts) == 2 {
+			dot.WriteString("  \"" + parts[0] + "\" -- \"" + parts[1] + "\";\n")
+		}
+	}
+	dot.WriteString("}\n")
+
+	ioutil.WriteFile("mindmap.dot", dot.Bytes(), 0644)
+	exec.Command("dot", "-Tpng", "-o", "mindmap.png", "mindmap.dot").Run()
+
+	w.Header().Set("Content-Type", "image/png")
+	http.ServeFile(w, r, "mindmap.png")
+}
 
 func main() {
 	var err error
@@ -274,6 +363,7 @@ func main() {
 	http.HandleFunc("/api/login", loginHandler)
 	http.HandleFunc("/api/signup", signupHandler)
 	http.HandleFunc("/api/saveplan", savePlanHandler)
+	http.HandleFunc("/api/generate_mindmap", generateMindMap)
 
 	log.Println("Server started at http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
