@@ -290,7 +290,7 @@ func generateMindMap(w http.ResponseWriter, r *http.Request) {
 	parentStack := []string{topic}
 	lastLevel := 0
 
-	// Add the topic as the root node
+	
 	nodes = append(nodes, topic)
 
 	for _, line := range planLines {
