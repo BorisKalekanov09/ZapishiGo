@@ -1,6 +1,29 @@
 import React, { useState } from "react";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
+export default function TextEditor({
+  title,
+  setTitle,
+  text,
+  setText,
+  userEmail,
+}) {
+  const [selectedOption, setSelectedOption] = useState("");
+  const [showMenu, setShowMenu] = useState(false);
+  const [pendingOutput, setPendingOutput] = useState("");
+  const [showSaved, setShowSaved] = useState(false);
+  const [showDuplicate, setShowDuplicate] = useState(false);
+const [error, setError] = useState("");
+  const handleMenuClick = (option) => {
+    setSelectedOption(option);
+    setShowMenu(false);
+  };
+
+  const apiKey = process.env.REACT_APP_APIKEY;
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+
+
 const DownloadButton = ({ title, text, onError }) => {
   const handleDownload = () => {
     if (!title || !text) {
@@ -27,28 +50,6 @@ const DownloadButton = ({ title, text, onError }) => {
   );
 };
 
-export default function TextEditor({
-  title,
-  setTitle,
-  text,
-  setText,
-  userEmail,
-}) {
-  const [selectedOption, setSelectedOption] = useState("");
-  const [showMenu, setShowMenu] = useState(false);
-  const [pendingOutput, setPendingOutput] = useState("");
-  const [showSaved, setShowSaved] = useState(false);
-  const [showDuplicate, setShowDuplicate] = useState(false);
-  const [error, setError] = useState("");
-
-  const handleMenuClick = (option) => {
-    setSelectedOption(option);
-    setShowMenu(false);
-  };
-
-  const apiKey = process.env.REACT_APP_APIKEY;
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
   const handleContinue = async (e) => {
     e.preventDefault();
@@ -75,16 +76,76 @@ export default function TextEditor({
       setPendingOutput("");
     }
   };
-  const handleSavePlan = () => {
-    if (!title || !text) {
-      alert("Please enter a title and some text before saving.");
-      return; // I added this check to prevent saving empty plans
-      // add here your code for the database
+
+
+const savePlan = async (title, text) => {
+  try {
+    const res = await fetch("http://localhost:8080/api/saveplan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, text, email: userEmail }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      setError(data.message || "Failed to save plan");
+      return false;
     }
-  };
+
+    return true;
+  } catch (error) {
+    setError("Network error while saving plan");
+    return false;
+  }
+};
+
+const handleSavePlan = async () => {
+  setError("");
+
+  if (!title || !text || !userEmail) {
+    setError("Please enter a title, some text and be logged in before saving.");
+    return;
+  }
+
+  const success = await savePlan(title, text);
+
+  if (success) {
+    setShowSaved(true);
+    setTimeout(() => setShowSaved(false), 3000);
+  }
+};
 
   return (
     <div className="card mt-4 position-relative">
+      <div
+        className={`position-absolute start-50 translate-middle-x px-4 py-2 rounded bg-success text-white shadow
+          ${showSaved ? "fade-in" : "fade-out"}`}
+        style={{
+          top: "-50px",
+          left: "50%",
+          zIndex: 10,
+          opacity: showSaved ? 1 : 0,
+          pointerEvents: "none",
+          transition: "opacity 1s",
+        }}
+      >
+        Plan was saved!
+      </div>
+      <div
+        className={`position-absolute start-50 translate-middle-x px-4 py-2 rounded bg-danger text-white shadow
+          ${showDuplicate ? "fade-in" : "fade-out"}`}
+        style={{
+          top: "-50px",
+          left: "50%",
+          zIndex: 10,
+          opacity: showDuplicate ? 1 : 0,
+          pointerEvents: "none",
+          transition: "opacity 1s",
+        }}
+      >
+        Plan already exists!
+      </div>
       <div className="card-header">Text Editor</div>
       <div className="card-body">
         <form onSubmit={handleContinue}>
@@ -167,13 +228,8 @@ export default function TextEditor({
             >
               Save Plan
             </button>
-            <DownloadButton title={title} text={text} onError={setError} />
+             <DownloadButton title={title} text={text} onError={setError} />
           </div>
-          {error && (
-            <div className="alert alert-danger mt-3" role="alert">
-              {error}
-            </div>
-          )}
         </form>
       </div>
     </div>

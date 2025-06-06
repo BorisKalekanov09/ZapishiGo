@@ -1,16 +1,16 @@
 // src/components/Sidebar.jsx
 import React from "react";
 import "./sidebar.css";
-import { FaUser } from "react-icons/fa";
+import {FaUser} from 'react-icons/fa'
 export default function Sidebar({
   title,
   text,
   active,
   setActive,
   onShowPlans,
-  userName,
-  onSignOut,
-  onNewProject,
+    userName,
+      onSignOut,
+       onNewProject, 
 }) {
   const isDisabled = !title || !text;
 
@@ -98,7 +98,7 @@ export default function Sidebar({
           data-bs-toggle="dropdown"
           aria-expanded="false"
         >
-          {<FaUser className="icon" />}
+          {< FaUser className="icon"/>}
           <strong className="username">{userName || "User"}</strong>
         </a>
         <ul
@@ -106,18 +106,15 @@ export default function Sidebar({
           aria-labelledby="dropdownUser1"
         >
           <li>
-            <a
-              className="dropdown-item"
-              href="#"
-              onClick={() => {
-                setActive("home");
-                onNewProject();
-              }}
-            >
+            <a className="dropdown-item" href="#"   onClick={() => {
+      setActive("home");
+      onNewProject();  
+    }}
+  >
               New project...
             </a>
           </li>
-
+        
           {/*<li>
             <a className="dropdown-item" href="#">
               Profile
@@ -126,18 +123,19 @@ export default function Sidebar({
           <li>
             <hr className="dropdown-divider" />
           </li>
-
+        
           <li>
             <button
               className="dropdown-item"
               type="button"
-              onClick={onShowPlans}
+              onClick={onShowPlans} 
             >
               Show plans
             </button>
           </li>
-          <li>
+            <li>
             <a className="dropdown-item" href="#" onClick={onSignOut}>
+              
               Sign out
             </a>
           </li>

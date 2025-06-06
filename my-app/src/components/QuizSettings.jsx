@@ -7,7 +7,6 @@ async function generateQuizQuestions({ numQuestions, types, title, text }) {
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-  // Calculate how many open/multiple questions
   let numOpen = 0,
     numMultiple = 0;
   if (types.length === 2) {
@@ -19,7 +18,6 @@ async function generateQuizQuestions({ numQuestions, types, title, text }) {
     numMultiple = numQuestions;
   }
 
-  // Build prompt for AI
   let prompt = `Based on the following title and text, generate ${numQuestions} quiz questions.`;
   if (numOpen && numMultiple) {
     prompt += ` 30% should be open questions and 70% should be multiple choice (A, B, C, D).`;
@@ -37,7 +35,6 @@ async function generateQuizQuestions({ numQuestions, types, title, text }) {
   const output =
     typeof response.text === "function" ? await response.text() : response.text;
 
-  // Try to parse JSON from AI output
   try {
     const jsonStart = output.indexOf("[");
     const jsonEnd = output.lastIndexOf("]");
@@ -70,7 +67,7 @@ export default function QuizSettings({ onQuizGenerated, title, text }) {
       const selectedTypes = Object.keys(types).filter((t) => types[t]);
       const questions = await generateQuizQuestions({
         numQuestions,
-        types: selectedTypes, // always an array
+        types: selectedTypes, 
         title,
         text,
       });
