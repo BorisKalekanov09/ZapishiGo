@@ -4,7 +4,8 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/json"
-	"io/ioutil"
+	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -37,8 +38,12 @@ var db *sql.DB
 
 func enableCORS(w http.ResponseWriter) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type,Accept")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+}
+
+func encodeID(s string) string {
+	return strings.NewReplacer(" ", "_", ".", "_").Replace(s)
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
@@ -267,7 +272,7 @@ func generateMindMap(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Cannot read body", http.StatusBadRequest)
 		return
@@ -278,12 +283,15 @@ func generateMindMap(w http.ResponseWriter, r *http.Request) {
 	topic := strings.TrimSpace(lines[0])
 	planLines := lines[1:]
 
-	re := regexp.MustCompile(`^(\\d+(?:\\.\\d+)*)\\.\\s*(.*)$`)
+	re := regexp.MustCompile(`^(\d+(?:\.\d+)*)\.\s*(.*)$`)
 
 	var nodes []string
 	var edges []string
 	parentStack := []string{topic}
 	lastLevel := 0
+
+	// Add the topic as the root node
+	nodes = append(nodes, topic)
 
 	for _, line := range planLines {
 		line = strings.TrimSpace(line)
@@ -308,7 +316,7 @@ func generateMindMap(w http.ResponseWriter, r *http.Request) {
 			nodes = append(nodes, key)
 			lastLevel = level
 		} else {
-			// Ако няма номерация – ново ниво 1
+
 			key := line
 			edges = append(edges, topic+" -> "+key)
 			nodes = append(nodes, key)
@@ -321,22 +329,30 @@ func generateMindMap(w http.ResponseWriter, r *http.Request) {
 	dot.WriteString("graph MindMap {\n")
 	dot.WriteString("  labelloc=\"t\";\n")
 	dot.WriteString("  label=\"" + topic + "\";\n")
-	dot.WriteString("  layout=twopi;\n")
+	dot.WriteString("  layout=dot;\n")
+	dot.WriteString("  rankdir=LR;\n")
+
 	dot.WriteString("  node [shape=box, style=filled, fillcolor=lightyellow, fontname=Arial];\n")
-	dot.WriteString("  \"" + topic + "\";\n")
+	dot.WriteString(fmt.Sprintf("  \"%s\" [label=\"%s\"];\n", encodeID(topic), topic))
 	for _, n := range nodes {
-		dot.WriteString("  \"" + n + "\";\n")
+		if n == topic {
+			continue
+		}
+		dot.WriteString(fmt.Sprintf("  \"%s\" [label=\"%s\"];\n", encodeID(n), n))
 	}
 	for _, e := range edges {
 		parts := strings.SplitN(e, " -> ", 2)
 		if len(parts) == 2 {
-			dot.WriteString("  \"" + parts[0] + "\" -- \"" + parts[1] + "\";\n")
+			dot.WriteString(fmt.Sprintf("  \"%s\" -- \"%s\";\n", encodeID(parts[0]), encodeID(parts[1])))
 		}
 	}
 	dot.WriteString("}\n")
 
-	ioutil.WriteFile("mindmap.dot", dot.Bytes(), 0644)
-	exec.Command("dot", "-Tpng", "-o", "mindmap.png", "mindmap.dot").Run()
+	os.WriteFile("mindmap.dot", dot.Bytes(), 0644)
+	err = exec.Command("dot", "-Tpng", "-o", "mindmap.png", "mindmap.dot").Run()
+	if err != nil {
+		log.Println("dot command failed:", err)
+	}
 
 	w.Header().Set("Content-Type", "image/png")
 	http.ServeFile(w, r, "mindmap.png")
