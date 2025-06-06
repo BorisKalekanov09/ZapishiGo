@@ -8,6 +8,7 @@ import Quiz from "./Quiz";
 import Modal from "react-bootstrap/Modal";
 import Button from "react-bootstrap/Button";
 import "bootstrap/dist/css/bootstrap.min.css";
+import MindMapPage from "./MindMapPage";
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -141,6 +142,9 @@ export default function App() {
                   setQuizQuestions(null);
                 }}
               />
+            )}
+              {activePage === "mindmaps" && (
+            <MindMapPage title={title} text={text} />
             )}
 
           

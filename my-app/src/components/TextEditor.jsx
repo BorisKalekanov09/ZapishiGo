@@ -54,7 +54,7 @@ const DownloadButton = ({ title, text, onError }) => {
   const handleContinue = async (e) => {
     e.preventDefault();
     try {
-      const prompt = `Continue the following text appropriately. Use this guidance (do not say it in the fial answer): "${selectedOption}". Do not mention the instruction or that you're an AI — just continue the writing:\n\n${text}\n\n let the answer be only the new part that you add dont put ... to show that there is tex before ,and also prease dont say the guidance thanks`;
+      const prompt = `Continue the following text appropriately. Use this guidance (do not say it in the fial answer): "${selectedOption}". Do not mention the instruction or that you're an AI — just continue the writing:\n\n${text}\n\n let the answer be only the new part that you add dont put ... to show that there is tex before ,and also please dont say the guidance thanks`;
 
       const result = await model.generateContent(prompt);
 
